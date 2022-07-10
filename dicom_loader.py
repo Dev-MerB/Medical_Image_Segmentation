@@ -7,8 +7,7 @@ import natsort
 from pydicom import dcmread
 import nibabel as nib
 import glob
-import cv2
-
+import matplotlib.pyplot as plt
 class LungCancerDataset(data.Dataset):
     def __init__(self, root_path, size, mode="train"):
         super(LungCancerDataset, self).__init__()
@@ -21,16 +20,16 @@ class LungCancerDataset(data.Dataset):
 
         if (self.mode == "train"):
             train_dir = os.path.join(self.root_path, "train")
-            self.dcm = natsort.natsorted(glob.glob(os.path.join(train_dir,"*.dcm")))
-            self.nifti = natsort.natsorted(glob.glob(os.path.join(train_dir,"*.nii")))
+            self.dcm = natsort.natsorted(glob.glob(os.path.join(train_dir,"**","*.dcm"),recursive=True))
+            self.nifti = natsort.natsorted(glob.glob(os.path.join(train_dir,"**","*.nii"),recursive=True))
         elif (self.mode == "valid"):
             val_dir = os.path.join(self.root_path, "valid")
-            self.dcm = natsort.natsorted(glob.glob(os.path.join(val_dir,"*.dcm")))
-            self.nifti = natsort.natsorted(glob.glob(os.path.join(val_dir,"*.nii")))
+            self.dcm = natsort.natsorted(glob.glob(os.path.join(val_dir,"**","*.dcm"),recursive=True))
+            self.nifti = natsort.natsorted(glob.glob(os.path.join(val_dir,"**","*.nii"),recursive=True))
         elif self.mode == "test":
             test_dir = os.path.join(self.root_path,"test")
-            self.dcm = natsort.natsorted(glob.glob(os.path.join(test_dir,"*.dcm")))
-            self.nifti = natsort.natsorted(glob.glob(os.path.join(test_dir,"*.nii")))
+            self.dcm = natsort.natsorted(glob.glob(os.path.join(test_dir,"**","*.dcm"),recursive=True))
+            self.nifti = natsort.natsorted(glob.glob(os.path.join(test_dir,"**","*.nii"),recursive=True))
         else:
             raise NotImplementedError
 
@@ -58,13 +57,23 @@ class LungCancerDataset(data.Dataset):
 		# image = (im/4095).astype(np.float32)
 		###
 
+        # fig = plt.figure()
+        # ax1 = fig.add_subplot(1,2,1)
+        # ax1.imshow(dcm,cmap='gray')
+
         dcm= torch.from_numpy(dcm).contiguous().type(torch.FloatTensor)
         dcm = dcm.unsqueeze(0)
-		# print(image.shape)
+        # print(dcm.shape)
 
         nifti = nib.load(self.nifti[idx])
         gt = nifti.get_fdata()
-        gt = torch.from_numpy(gt.transpose((2,1,0))).type(torch.FloatTensor)
+        # print(gt.shape)
+
+        # ax2 = fig.add_subplot(1,2,2)
+        # ax2.imshow(gt.transpose((1,0)),cmap='gray')
+
+        # plt.show()
+        gt = torch.from_numpy(gt.transpose((1,0))).type(torch.FloatTensor)
 
         sample = {"dcm": dcm, "nifti": gt, "affine":nifti.affine}
 

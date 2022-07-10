@@ -5,7 +5,6 @@ from torch import optim
 import torch.nn.functional as F
 from network import U_Net
 from PIL import Image
-import cv2
 from tqdm import tqdm
 import nibabel as nib
 
@@ -36,7 +35,7 @@ class Solver(object):
 		self.beta2 = config.beta2
 
 		# Training settings
-		self.num_epochs = config.num_epoch
+		self.num_epochs = config.num_epochs
 
 		# Path
 		self.model_path = config.model_path
@@ -44,12 +43,8 @@ class Solver(object):
 		self.mode = config.mode
 
 		self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-		self.model_type = config.model_type
-		self.t = config.t
 
 		self.test_model = config.test_model
-		self.train_path = config.train_path
-		self.test_path = config.test_path
 		self.build_model()
 
 	def build_model(self):

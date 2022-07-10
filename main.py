@@ -15,8 +15,6 @@ def main(config):
     config.result_path = os.path.join(config.result_path,config.test_model)
     if not os.path.exists(config.result_path):
         os.makedirs(config.result_path)
-    if not os.path.exists(os.path.join(config.result_path, "Raw")):
-        os.makedirs(os.path.join(config.result_path, "Raw"))
     if not os.path.exists(os.path.join(config.result_path, "Predict")):
         os.makedirs(os.path.join(config.result_path, "Predict"))
     if not os.path.exists(os.path.join(config.result_path, "GT")):
