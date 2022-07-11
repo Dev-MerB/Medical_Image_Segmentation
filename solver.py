@@ -27,7 +27,7 @@ class Solver(object):
 		self.optimizer = None
 		self.img_ch = config.img_ch
 		self.output_ch = config.output_ch
-		self.criterion = torch.nn.BCELoss()
+		self.criterion = DiceLoss()
 
 		# Hyper-parameters
 		self.lr = config.lr
@@ -41,6 +41,7 @@ class Solver(object):
 		self.model_path = config.model_path
 		self.result_path = config.result_path
 		self.mode = config.mode
+		self.pretrain_model = config.pretrain_model
 
 		self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -71,7 +72,6 @@ class Solver(object):
 
 				pred= self.model(dcm)
 				pred = torch.sigmoid(pred)
-				self.criterion=DiceLoss() #BCE not use
 				loss = self.criterion(gt,pred)
 				train_losses.append(loss.item())
 
@@ -98,28 +98,34 @@ class Solver(object):
 			valid_loss = np.average(valid_losses)
 			print('Epoch [%d/%d], Train Loss: %.4f,  Valid Loss: %.4f, LR:%f' % 
 								(epoch+1, self.num_epochs, train_loss, valid_loss,lr))
-			unet_path = os.path.join(self.model_path,"0215_EV3", '%s_%d_%f.pkl' % (self.model_type,epoch+1,lr))
+			unet_path = os.path.join(self.model_path, '%s_%d_%f.pkl' % ("unet",epoch+1,lr))
 
 			if min_loss > valid_loss : 
 				min_loss = valid_loss
-				torch.save(self.unet.state_dict(), unet_path)
+				torch.save(self.model.state_dict(), unet_path)
 
 	def test(self, test_loader):
-		
+		model_path = os.path.join(self.model_path,self.pretrain_model)
 		self.model.load_state_dict(torch.load(model_path))
 		self.model.train(False)
 		self.model.eval()
 
 		for i, data in enumerate(tqdm(test_loader)):
 			dcm = data["dcm"].to(self.device)
+			raw_dcm = data["dcm"]
+			# print(raw_dcm.shape)
 			gt = data["nifti"]
-			affine = data["affine"]
+			# print("gt ",gt.shape)
+			affine = data["affine"].squeeze(0).numpy()
+			file_name = data["file_name"]
+			# print(file_name)
+
 			pred = torch.sigmoid(self.model(dcm))
 			pred = (pred>0.5).float()
-			pred0 = pred.unsqueeze(0)
-			pred0 = pred0.unsqueeze(0)
+			pred0 = pred.squeeze(0).cpu()
+			# print("float shape", pred0.shape)
 			
-			gt = nib.Nifti1Image(gt,affine=affine)
-			pred = nib.Nifti1Image(pred0.numpy(),affine=affine)
-			nib.save(gt, os.path.join(self.result_path,"GT",image_path[0].split(".")[0]+".nii"))
-			nib.save(pred, os.path.join(self.result_path,"Predict",image_path[0].split(".")[0]+".nii"))
+			gt = nib.Nifti1Image(gt.numpy().transpose((2,1,0)),affine=affine)
+			pred = nib.Nifti1Image(pred0.numpy().transpose((2,1,0)),affine=affine)
+			nib.save(gt, os.path.join(self.result_path,"GT",file_name[0]))
+			nib.save(pred, os.path.join(self.result_path,"Predict",file_name[0]))

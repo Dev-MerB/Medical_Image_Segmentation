@@ -9,7 +9,7 @@ import nibabel as nib
 import glob
 import matplotlib.pyplot as plt
 class LungCancerDataset(data.Dataset):
-    def __init__(self, root_path, size, mode="train"):
+    def __init__(self, root_path, mode="train"):
         super(LungCancerDataset, self).__init__()
 
         self.root_path = root_path
@@ -74,7 +74,7 @@ class LungCancerDataset(data.Dataset):
 
         # plt.show()
         gt = torch.from_numpy(gt.transpose((1,0))).type(torch.FloatTensor)
-
-        sample = {"dcm": dcm, "nifti": gt, "affine":nifti.affine}
+    
+        sample = {"dcm": dcm, "nifti": gt, "affine":nifti.affine,"file_name": self.nifti[idx].split('/')[-1]}
 
         return sample

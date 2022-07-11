@@ -55,6 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_model', type=str, default='EV1')
     parser.add_argument('--mode', type=str, default='train')
     parser.add_argument('--model_path', type=str, default='./models')
+    parser.add_argument('--pretrain_model', type=str, default="test.pkl")
     parser.add_argument('--data_path', type=str, default='./Dataset')
     parser.add_argument('--result_path', type=str, default='./result/')
 
