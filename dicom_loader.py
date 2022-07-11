@@ -9,10 +9,11 @@ import nibabel as nib
 import glob
 import matplotlib.pyplot as plt
 class LungCancerDataset(data.Dataset):
-    def __init__(self, root_path, mode="train"):
+    def __init__(self, config, mode="train"):
         super(LungCancerDataset, self).__init__()
 
-        self.root_path = root_path
+        self.result_path = config.result_path
+        self.root_path = config.data_path
         self.mode = mode
         self.transforms = None
         self.dcm = None
@@ -38,6 +39,8 @@ class LungCancerDataset(data.Dataset):
 
     def __getitem__(self, idx):
         ds = dcmread(self.dcm[idx])
+        if self.mode == "test":
+            ds.save_as(os.path.join(self.result_path,"Raw",self.dcm[idx].split('/')[-1]))
         dcm = (ds.pixel_array/4095).astype(np.float32)
 
 		### display range apply 
@@ -74,7 +77,9 @@ class LungCancerDataset(data.Dataset):
 
         # plt.show()
         gt = torch.from_numpy(gt.transpose((1,0))).type(torch.FloatTensor)
+        
     
-        sample = {"dcm": dcm, "nifti": gt, "affine":nifti.affine,"file_name": self.nifti[idx].split('/')[-1]}
+        sample = {"dcm": dcm, "nifti": gt, "affine":nifti.affine,
+            "nifti_file_name": self.nifti[idx].split('/')[-1]}
 
         return sample

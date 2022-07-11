@@ -7,7 +7,8 @@ from network import U_Net
 from PIL import Image
 from tqdm import tqdm
 import nibabel as nib
-
+import pydicom
+from evaluation import eval_volume_from_mask
 class DiceLoss(torch.nn.Module):
     def __init__(self, weight=None):
         super(DiceLoss, self).__init__()
@@ -112,12 +113,11 @@ class Solver(object):
 
 		for i, data in enumerate(tqdm(test_loader)):
 			dcm = data["dcm"].to(self.device)
-			raw_dcm = data["dcm"]
 			# print(raw_dcm.shape)
 			gt = data["nifti"]
 			# print("gt ",gt.shape)
 			affine = data["affine"].squeeze(0).numpy()
-			file_name = data["file_name"]
+			nifti_file_name = data["nifti_file_name"]
 			# print(file_name)
 
 			pred = torch.sigmoid(self.model(dcm))
@@ -127,5 +127,7 @@ class Solver(object):
 			
 			gt = nib.Nifti1Image(gt.numpy().transpose((2,1,0)),affine=affine)
 			pred = nib.Nifti1Image(pred0.numpy().transpose((2,1,0)),affine=affine)
-			nib.save(gt, os.path.join(self.result_path,"GT",file_name[0]))
-			nib.save(pred, os.path.join(self.result_path,"Predict",file_name[0]))
+			nib.save(gt, os.path.join(self.result_path,"GT",nifti_file_name[0]))
+			nib.save(pred, os.path.join(self.result_path,"Predict",nifti_file_name[0]))
+		
+		eval_volume_from_mask(os.path.join(self.result_path,"GT"),os.path.join(self.result_path,"Predict"))
