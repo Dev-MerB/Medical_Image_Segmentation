@@ -72,11 +72,21 @@ class LungCancerDataset(data.Dataset):
         gt = nifti.get_fdata()
         # print(gt.shape)
 
+        if(len(gt.shape)==2):
+            gt = np.expand_dims(gt,2)
+            # print("exnpand",gt.shape)
+            # ax2 = fig.add_subplot(1,2,2)
+            # ax2.imshow(gt.transpose((2,1,0)),cmap='gray')
+            gt = torch.from_numpy(gt.transpose((2,1,0))).type(torch.FloatTensor)
+            # plt.show()
+        else:
+            # print(gt.shape)
+            gt = torch.from_numpy(gt.transpose((2,1,0))).type(torch.FloatTensor)
         # ax2 = fig.add_subplot(1,2,2)
-        # ax2.imshow(gt.transpose((1,0)),cmap='gray')
+        # ax2.imshow(gt.transpose((2,1,0)),cmap='gray')
 
         # plt.show()
-        gt = torch.from_numpy(gt.transpose((1,0))).type(torch.FloatTensor)
+        # gt = torch.from_numpy(gt.transpose((2,1,0))).type(torch.FloatTensor)
         
     
         sample = {"dcm": dcm, "nifti": gt, "affine":nifti.affine,
