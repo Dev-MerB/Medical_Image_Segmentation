@@ -115,6 +115,7 @@ class Solver(object):
 			dcm = data["dcm"].to(self.device)
 			# print(raw_dcm.shape)
 			gt = data["nifti"]
+			# print(gt.numpy().shape)
 			# print("gt ",gt.shape)
 			affine = data["affine"].squeeze(0).numpy()
 			nifti_file_name = data["nifti_file_name"]
@@ -125,7 +126,7 @@ class Solver(object):
 			pred0 = pred.squeeze(0).cpu()
 			# print("float shape", pred0.shape)
 			
-			gt = nib.Nifti1Image(gt.numpy().transpose((2,1,0)),affine=affine)
+			gt = nib.Nifti1Image(gt.numpy().squeeze(0).transpose((1,0,2)),affine=affine)
 			pred = nib.Nifti1Image(pred0.numpy().transpose((2,1,0)),affine=affine)
 			nib.save(gt, os.path.join(self.result_path,"GT",nifti_file_name[0]))
 			nib.save(pred, os.path.join(self.result_path,"Predict",nifti_file_name[0]))
