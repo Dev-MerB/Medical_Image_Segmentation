@@ -9,6 +9,7 @@ from tqdm import tqdm
 import nibabel as nib
 import pydicom
 from evaluation import eval_volume_from_mask
+import matplotlib.pyplot as plt
 class DiceLoss(torch.nn.Module):
     def __init__(self, weight=None):
         super(DiceLoss, self).__init__()
@@ -71,8 +72,7 @@ class Solver(object):
 				dcm = data["dcm"].to(self.device)
 				gt = data["nifti"].to(self.device)
 
-				pred= self.model(dcm)
-				pred = torch.sigmoid(pred)
+				pred = torch.sigmoid(self.model(dcm))
 				loss = self.criterion(gt,pred)
 				train_losses.append(loss.item())
 
@@ -87,11 +87,18 @@ class Solver(object):
 			for i, data in enumerate(tqdm(valid_loader)):
 				dcm = data["dcm"].to(self.device)
 				gt = data["nifti"].to(self.device)
+				affine = data["affine"].squeeze(0).numpy()
+				nifti_file_name = data["nifti_file_name"]
 
-				pred= self.model(dcm)
-				pred = torch.sigmoid(pred)
-				self.criterion=DiceLoss() #BCE not use
+				pred = torch.sigmoid(self.model(dcm))
 				loss = self.criterion(gt,pred)
+				pred = (pred>0.5).float()
+
+				val_gt = nib.Nifti1Image(gt[0][0].cpu().numpy().transpose((1,0)),affine=affine)
+				pred = nib.Nifti1Image(pred[0][0].cpu().numpy().transpose((1,0)),affine=affine)
+				nib.save(val_gt, os.path.join("./valid","GT",nifti_file_name[0]))
+				nib.save(pred, os.path.join("./valid","Predict",nifti_file_name[0]))
+
 				valid_losses.append(loss.item())
 				
 			# Print the log info
@@ -114,7 +121,7 @@ class Solver(object):
 		for i, data in enumerate(tqdm(test_loader)):
 			dcm = data["dcm"].to(self.device)
 			# print(raw_dcm.shape)
-			gt = data["nifti"]
+			gt = data["nifti"].to(self.device)
 			# print(gt.numpy().shape)
 			# print("gt ",gt.shape)
 			affine = data["affine"].squeeze(0).numpy()
@@ -123,11 +130,20 @@ class Solver(object):
 
 			pred = torch.sigmoid(self.model(dcm))
 			pred = (pred>0.5).float()
-			pred0 = pred.squeeze(0).cpu()
 			# print("float shape", pred0.shape)
 			
-			gt = nib.Nifti1Image(gt.numpy().squeeze(0).transpose((1,0,2)),affine=affine)
-			pred = nib.Nifti1Image(pred0.numpy().transpose((2,1,0)),affine=affine)
+			# fig = plt.figure()
+			# ax1 = fig.add_subplot(1,3,1)
+			# ax1.imshow(dcm.cpu().numpy().squeeze(0).transpose((1,2,0)),cmap='gray')
+			# ax2 = fig.add_subplot(1,3,2)
+			# ax2.imshow(gt.numpy().squeeze(0).transpose((0,1,2)),cmap='gray')
+
+			# ax3 = fig.add_subplot(1,3,3)
+			# ax3.imshow(pred0.numpy().transpose((2,1,0)),cmap='gray')
+			# plt.show()
+
+			gt = nib.Nifti1Image(gt[0][0].cpu().numpy().transpose((1,0)),affine=affine)
+			pred = nib.Nifti1Image(pred[0][0].cpu().numpy().transpose((1,0)),affine=affine)
 			nib.save(gt, os.path.join(self.result_path,"GT",nifti_file_name[0]))
 			nib.save(pred, os.path.join(self.result_path,"Predict",nifti_file_name[0]))
 		

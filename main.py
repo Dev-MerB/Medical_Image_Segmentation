@@ -20,6 +20,12 @@ def main(config):
         os.makedirs(os.path.join(config.result_path, "GT"))
     if not os.path.exists(os.path.join(config.result_path, "Raw")):
         os.makedirs(os.path.join(config.result_path, "Raw"))
+    if not os.path.exists(config.valid):
+        os.makedirs(config.valid)
+    if not os.path.exists(os.path.join(config.valid, "Predict")):
+        os.makedirs(os.path.join(config.valid, "Predict"))
+    if not os.path.exists(os.path.join(config.valid, "GT")):
+        os.makedirs(os.path.join(config.valid, "GT"))
     
     solver = Solver(config)
     if config.mode == "train":
@@ -57,6 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('--pretrain_model', type=str, default="test.pkl")
     parser.add_argument('--data_path', type=str, default='./Dataset')
     parser.add_argument('--result_path', type=str, default='./result/')
+    parser.add_argument('--valid',type=str, default='./valid')
 
     parser.add_argument('--cuda_idx', type=str, default="2")
 

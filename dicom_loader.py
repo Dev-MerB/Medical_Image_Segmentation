@@ -66,18 +66,18 @@ class LungCancerDataset(data.Dataset):
 
         dcm= torch.from_numpy(dcm).contiguous().type(torch.FloatTensor)
         dcm = dcm.unsqueeze(0)
-        # print(dcm.shape)
+        # print("dcm",dcm.shape)
 
         nifti = nib.load(self.nifti[idx])
         gt = nifti.get_fdata()
         # print(gt.shape)
 
-        # gt = torch.from_numpy(gt.transpose((2,1,0))).type(torch.FloatTensor)
         # ax2 = fig.add_subplot(1,2,2)
         # ax2.imshow(gt.transpose((1,0,2)),cmap='gray')
 
         # plt.show()
-        gt = torch.from_numpy(gt.transpose((1,0,2))).type(torch.FloatTensor)
+        gt = torch.from_numpy(gt.transpose((2,1,0))).type(torch.FloatTensor)
+        # print("gt",gt.shape)
         
     
         sample = {"dcm": dcm, "nifti": gt, "affine":nifti.affine,
